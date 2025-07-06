@@ -41,7 +41,6 @@ body, html {
 .input-line {
     display: flex;
     align-items: center;
-    visibility: hidden;
 }
 
 #command-input {
