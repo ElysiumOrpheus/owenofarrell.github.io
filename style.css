@@ -39,23 +39,28 @@ body, html {
 }
 
 .input-line {
-    display: none;
+    display: flex;
     align-items: center;
+    visibility: hidden;
+}
+
+#command-text {
+    white-space: pre;
 }
 
 #command-input {
-    background: transparent;
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+    opacity: 0;
+    width: 0;
+    height: 0;
     border: none;
-    color: #2C6E49;
-    font: inherit;
-    outline: none;
-    padding: 0;
-    caret-color: transparent;
 }
 
 #cursor {
     animation: blink 1s step-end infinite;
-    margin-left: 2px;
+    color: #2C6E49;
 }
 
 @keyframes blink {
