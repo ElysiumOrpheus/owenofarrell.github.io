@@ -28,7 +28,6 @@ body, html {
     box-sizing: border-box;
 }
 
-
 #output {
     white-space: pre-wrap;
     word-wrap: break-word;
@@ -55,15 +54,18 @@ body, html {
     caret-color: transparent;
 }
 
-#command-input:focus {
+/* --- FIX: New cursor styling --- */
+#cursor {
     animation: blink 1s step-end infinite;
+    margin-left: 2px;
 }
 
+/* --- FIX: Animation targets color for the new cursor span --- */
 @keyframes blink {
     from, to {
-        background-color: transparent;
+        color: transparent;
     }
     50% {
-        background-color: #2C6E49;
+        color: #2C6E49;
     }
 }
