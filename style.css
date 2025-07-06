@@ -1,4 +1,3 @@
-
 body, html {
     margin: 0;
     padding: 0;
@@ -10,26 +9,39 @@ body, html {
     font-size: 16px;
 }
 
+#matrix-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+}
+
 #terminal {
+    position: relative;
+    z-index: 1;
+    background-color: rgba(13, 13, 13, 0.9);
     padding: 10px;
     height: calc(100% - 20px);
     overflow-y: auto;
     box-sizing: border-box;
 }
 
+
 #output {
-    white-space: pre-wrap; 
+    white-space: pre-wrap;
     word-wrap: break-word;
+}
+
+.prompt {
+    margin-right: 8px;
+    white-space: nowrap;
 }
 
 .input-line {
     display: flex;
     align-items: center;
-}
-
-#prompt {
-    margin-right: 8px;
-    white-space: nowrap;
 }
 
 #command-input {
@@ -40,8 +52,8 @@ body, html {
     font: inherit;
     outline: none;
     padding: 0;
+    caret-color: transparent;
 }
-
 
 #command-input:focus {
     animation: blink 1s step-end infinite;
@@ -52,10 +64,6 @@ body, html {
         background-color: transparent;
     }
     50% {
-        background-color: #2C6E49; 
+        background-color: #2C6E49;
     }
-}
-
-#command-input {
-    caret-color: transparent;
 }
