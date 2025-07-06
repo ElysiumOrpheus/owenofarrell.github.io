@@ -41,10 +41,10 @@ body, html {
 .input-line {
     display: flex;
     align-items: center;
+    visibility: hidden;
 }
 
 #command-input {
-    flex-grow: 1;
     background: transparent;
     border: none;
     color: #2C6E49;
@@ -54,13 +54,11 @@ body, html {
     caret-color: transparent;
 }
 
-/* --- FIX: New cursor styling --- */
 #cursor {
     animation: blink 1s step-end infinite;
     margin-left: 2px;
 }
 
-/* --- FIX: Animation targets color for the new cursor span --- */
 @keyframes blink {
     from, to {
         color: transparent;

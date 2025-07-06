@@ -255,6 +255,7 @@ This terminal is a testament to that philosophy.
         for (const line of bootSequence) {
             await type(line.text);
         }
+        document.querySelector('.input-line').style.visibility = 'visible';
         commandInput.disabled = false;
         commandInput.focus();
         promptElement.textContent = `operator@owenofarrell:${currentPath.join('/').replace(/^~/, '~')}$`;
