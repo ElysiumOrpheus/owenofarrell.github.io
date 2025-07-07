@@ -81,3 +81,18 @@ body, html {
         color: #2C6E49;
     }
 }
+
+#escape-hatch {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    color: rgba(44, 110, 73, 0.5);
+    text-decoration: none;
+    font-size: 12px;
+    z-index: 100;
+    transition: color 0.3s;
+}
+
+#escape-hatch:hover {
+    color: #64ffda;
+}

@@ -5,6 +5,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const cursor = document.getElementById('cursor');
     const inputLine = document.querySelector('.input-line');
     const terminal = document.getElementById('terminal');
+    const keySound = document.getElementById('key-press-sound');
+    const bootSound = document.getElementById('boot-sound');
 
     const inputDisplay = document.createElement('span');
     inputDisplay.id = 'input-display';
@@ -76,10 +78,18 @@ This terminal is a testament to that philosophy.
             }
         }
     };
-
+    
     let currentPath = ['~'];
     let commandHistory = [];
     let historyIndex = -1;
+    let mode = 'normal'; // 'normal', 'contact'
+    let contactStep = 0;
+    let contactData = {};
+    
+    function playKeySound() {
+        keySound.currentTime = 0;
+        keySound.play();
+    }
 
     const bootSequence = [
         { text: 'CRITICAL_SUBSYSTEM_LINK ESTABLISHED...', delay: 100 },
@@ -96,6 +106,7 @@ This terminal is a testament to that philosophy.
             output.appendChild(line);
             function typeChar() {
                 if (i < text.length) {
+                    playKeySound();
                     line.textContent += text.charAt(i);
                     i++;
                     scrollToBottom();
@@ -126,7 +137,34 @@ This terminal is a testament to that philosophy.
         }
         return current.children;
     }
-    
+
+    function handleContactInput(input) {
+        switch (contactStep) {
+            case 0:
+                contactData.name = input;
+                print(`> Email:`);
+                contactStep++;
+                break;
+            case 1:
+                contactData.email = input;
+                print(`> Message:`);
+                contactStep++;
+                break;
+            case 2:
+                contactData.message = input;
+                print(`Thank you, ${contactData.name}. Transmitting message...`);
+                // This is where we will call the serverless function
+                // For now, let's just log it and reset
+                console.log(contactData);
+                // In a real scenario: await sendEmail(contactData);
+                print(`Message sent. Returning to normal operation.`);
+                mode = 'normal';
+                contactStep = 0;
+                contactData = {};
+                break;
+        }
+    }
+
     function executeCommand(command) {
         const parts = command.trim().split(' ');
         const cmd = parts[0].toLowerCase();
@@ -138,7 +176,7 @@ This terminal is a testament to that philosophy.
 <span style="color: #64ffda;">about</span>      - Display summary about me.
 <span style="color: #64ffda;">projects</span>   - List my projects.
 <span style="color: #64ffda;">skills</span>     - List my technical skills.
-<span style="color: #64ffda;">contact</span>    - Show my contact information.
+<span style="color: #64ffda;">contact</span>    - Open a secure channel to contact me.
 <span style="color: #64ffda;">clear</span>      - Clear the terminal screen.
 <span style="color: #64ffda;">reboot</span>     - Reboot the system.
 <span style="color: #64ffda;">ls</span>         - List directory contents.
@@ -167,7 +205,11 @@ This terminal is a testament to that philosophy.
                 print(skillsOutput);
                 break;
             case 'contact':
-                print('Contact me via: <a href="mailto:email@example.com" style="color: #64ffda;">email@example.com</a>');
+                mode = 'contact';
+                contactStep = 0;
+                contactData = {};
+                print('Starting secure contact protocol...');
+                print('> Name:');
                 break;
             case 'reboot':
                 output.innerHTML = '';
@@ -241,44 +283,50 @@ This terminal is a testament to that philosophy.
     window.executeCommand = executeCommand;
 
     commandInput.addEventListener('input', () => {
+        playKeySound();
         inputDisplay.textContent = commandInput.value;
         updateCursorPosition();
     });
 
     commandInput.addEventListener('keydown', (e) => {
+        const command = commandInput.value.trim();
+
         if (e.key === 'Enter') {
             e.preventDefault();
-            const command = commandInput.value.trim();
-            const currentPrompt = `operator@owenofarrell:${currentPath.join('/').replace(/^~/, '~')}$`;
             
-            print(`<span class="prompt">${currentPrompt}</span> ${command}`);
-            
-            if (command) {
-                commandHistory.push(command);
-                historyIndex = commandHistory.length;
-                executeCommand(command);
+            if (mode === 'contact') {
+                print(`> ${command}`);
+                handleContactInput(command);
+            } else {
+                const currentPrompt = `operator@owenofarrell:${currentPath.join('/').replace(/^~/, '~')}$`;
+                print(`<span class="prompt">${currentPrompt}</span> ${command}`);
+                if (command) {
+                    commandHistory.push(command);
+                    historyIndex = commandHistory.length;
+                    executeCommand(command);
+                }
             }
             
             commandInput.value = '';
             inputDisplay.textContent = '';
-            promptElement.textContent = `operator@owenofarrell:${currentPath.join('/').replace(/^~/, '~')}$`;
+            promptElement.textContent = mode === 'contact' ? '>' : `operator@owenofarrell:${currentPath.join('/').replace(/^~/, '~')}$`;
             promptCachedWidth = 0;
             updateCursorPosition();
             scrollToBottom();
         } else if (e.key === 'ArrowUp') {
             e.preventDefault();
-            if (historyIndex > 0) {
+            if (mode === 'normal' && historyIndex > 0) {
                 historyIndex--;
                 commandInput.value = commandHistory[historyIndex];
                 inputDisplay.textContent = commandInput.value;
             }
         } else if (e.key === 'ArrowDown') {
             e.preventDefault();
-            if (historyIndex < commandHistory.length - 1) {
+            if (mode === 'normal' && historyIndex < commandHistory.length - 1) {
                 historyIndex++;
                 commandInput.value = commandHistory[historyIndex];
                 inputDisplay.textContent = commandInput.value;
-            } else {
+            } else if (mode === 'normal') {
                 historyIndex = commandHistory.length;
                 commandInput.value = '';
                 inputDisplay.textContent = '';
@@ -325,6 +373,7 @@ This terminal is a testament to that philosophy.
     async function boot() {
         commandInput.disabled = true;
         inputLine.style.display = 'none';
+        bootSound.play();
         for (const line of bootSequence) {
             await type(line.text);
         }
