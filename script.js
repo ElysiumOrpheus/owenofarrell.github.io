@@ -2,9 +2,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const output = document.getElementById('output');
     const commandInput = document.getElementById('command-input');
     const promptElement = document.getElementById('prompt');
-    const commandTextElement = document.getElementById('command-text');
-    const inputLine = document.querySelector('.input-line');
-    const terminal = document.getElementById('terminal');
+    const cursor = document.getElementById('cursor');
+
+    const sizer = document.createElement('span');
+    sizer.style.font = 'inherit';
+    sizer.style.position = 'absolute';
+    sizer.style.visibility = 'hidden';
+    sizer.style.whiteSpace = 'pre';
+    document.body.appendChild(sizer);
+    let promptCachedWidth = 0;
+
+    function updateCursorPosition() {
+        if (promptCachedWidth === 0) {
+            const promptStyle = window.getComputedStyle(promptElement);
+            const promptMarginRight = parseFloat(promptStyle.marginRight);
+            promptCachedWidth = promptElement.offsetWidth + promptMarginRight;
+        }
+        sizer.textContent = commandInput.value;
+        const textWidth = sizer.offsetWidth;
+        cursor.style.left = `${promptCachedWidth + textWidth}px`;
+    }
 
     const fileSystem = {
         '~': {
@@ -99,6 +116,7 @@ This terminal is a testament to that philosophy.
     }
     
     function scrollToBottom() {
+        const terminal = document.getElementById('terminal');
         terminal.scrollTop = terminal.scrollHeight;
     }
 
@@ -186,9 +204,7 @@ This terminal is a testament to that philosophy.
         }
     }
 
-    commandInput.addEventListener('input', () => {
-        commandTextElement.textContent = commandInput.value;
-    });
+    commandInput.addEventListener('input', updateCursorPosition);
 
     commandInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
@@ -196,20 +212,21 @@ This terminal is a testament to that philosophy.
             const command = commandInput.value.trim();
             const currentPrompt = `operator@owenofarrell:${currentPath.join('/').replace(/^~/, '~')}$`;
             
-            print(`<span class="prompt">${currentPrompt}</span> ${commandTextElement.textContent}`);
+            print(`<span class="prompt">${currentPrompt}</span> ${command}`);
             
             if (command) {
                 executeCommand(command);
             }
             
             commandInput.value = '';
-            commandTextElement.textContent = '';
             promptElement.textContent = `operator@owenofarrell:${currentPath.join('/').replace(/^~/, '~')}$`;
+            promptCachedWidth = 0;
+            updateCursorPosition();
             scrollToBottom();
         }
     });
 
-    terminal.addEventListener('click', () => {
+    document.body.addEventListener('click', () => {
         commandInput.focus();
     });
 
@@ -258,12 +275,16 @@ This terminal is a testament to that philosophy.
     setInterval(drawMatrix, 33);
 
     async function boot() {
+        commandInput.disabled = true;
         for (const line of bootSequence) {
             await type(line.text);
         }
-        inputLine.style.visibility = 'visible';
-        promptElement.textContent = `operator@owenofarrell:${currentPath.join('/').replace(/^~/, '~')}$`;
+        document.querySelector('.input-line').style.display = 'flex';
+        commandInput.disabled = false;
         commandInput.focus();
+        promptElement.textContent = `operator@owenofarrell:${currentPath.join('/').replace(/^~/, '~')}$`;
+        promptCachedWidth = 0;
+        updateCursorPosition();
     }
 
     boot();
