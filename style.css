@@ -39,7 +39,7 @@ body, html {
 }
 
 .input-line {
-    display: flex;
+    display: none;
     align-items: center;
     position: relative;
 }
