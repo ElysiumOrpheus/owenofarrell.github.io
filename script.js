@@ -3,13 +3,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const commandInput = document.getElementById('command-input');
     const promptElement = document.getElementById('prompt');
     const cursor = document.getElementById('cursor');
+    const inputLine = document.querySelector('.input-line');
 
-    const sizer = document.createElement('span');
-    sizer.style.font = 'inherit';
-    sizer.style.position = 'absolute';
-    sizer.style.visibility = 'hidden';
-    sizer.style.whiteSpace = 'pre';
-    document.body.appendChild(sizer);
+    const inputDisplay = document.createElement('span');
+    inputDisplay.id = 'input-display';
+    inputLine.insertBefore(inputDisplay, commandInput);
+
     let promptCachedWidth = 0;
 
     function updateCursorPosition() {
@@ -18,8 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const promptMarginRight = parseFloat(promptStyle.marginRight);
             promptCachedWidth = promptElement.offsetWidth + promptMarginRight;
         }
-        sizer.textContent = commandInput.value;
-        const textWidth = sizer.offsetWidth;
+        const textWidth = inputDisplay.offsetWidth;
         cursor.style.left = `${promptCachedWidth + textWidth}px`;
     }
 
@@ -204,7 +202,10 @@ This terminal is a testament to that philosophy.
         }
     }
 
-    commandInput.addEventListener('input', updateCursorPosition);
+    commandInput.addEventListener('input', () => {
+        inputDisplay.textContent = commandInput.value;
+        updateCursorPosition();
+    });
 
     commandInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
@@ -219,6 +220,7 @@ This terminal is a testament to that philosophy.
             }
             
             commandInput.value = '';
+            inputDisplay.textContent = '';
             promptElement.textContent = `operator@owenofarrell:${currentPath.join('/').replace(/^~/, '~')}$`;
             promptCachedWidth = 0;
             updateCursorPosition();
