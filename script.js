@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const promptElement = document.getElementById('prompt');
     const cursor = document.getElementById('cursor');
     const inputLine = document.querySelector('.input-line');
+    const terminal = document.getElementById('terminal');
 
     const inputDisplay = document.createElement('span');
     inputDisplay.id = 'input-display';
@@ -77,6 +78,8 @@ This terminal is a testament to that philosophy.
     };
 
     let currentPath = ['~'];
+    let commandHistory = [];
+    let historyIndex = -1;
 
     const bootSequence = [
         { text: 'CRITICAL_SUBSYSTEM_LINK ESTABLISHED...', delay: 100 },
@@ -91,7 +94,6 @@ This terminal is a testament to that philosophy.
             let i = 0;
             const line = document.createElement('div');
             output.appendChild(line);
-
             function typeChar() {
                 if (i < text.length) {
                     line.textContent += text.charAt(i);
@@ -114,18 +116,17 @@ This terminal is a testament to that philosophy.
     }
     
     function scrollToBottom() {
-        const terminal = document.getElementById('terminal');
         terminal.scrollTop = terminal.scrollHeight;
     }
 
     function getCurrentDirectory() {
-        let current = fileSystem;
-        for (const dir of currentPath) {
-            current = current[dir].children || current[dir];
+        let current = fileSystem['~'];
+        for (let i = 1; i < currentPath.length; i++) {
+            current = current.children[currentPath[i]];
         }
-        return current;
+        return current.children;
     }
-
+    
     function executeCommand(command) {
         const parts = command.trim().split(' ');
         const cmd = parts[0].toLowerCase();
@@ -134,13 +135,50 @@ This terminal is a testament to that philosophy.
         switch (cmd) {
             case 'help':
                 print(`Available commands:
-    <span style="color: #64ffda;">help</span>     - Show this help message.
-    <span style="color: #64ffda;">clear</span>    - Clear the terminal screen.
-    <span style="color: #64ffda;">ls</span>       - List directory contents.
-    <span style="color: #64ffda;">cd [dir]</span> - Change directory.
-    <span style="color: #64ffda;">cat [file]</span> - Display file content.
-    <span style="color: #64ffda;">whoami</span>   - Display user information.
-    <span style="color: #64ffda;">date</span>     - Display the current system date.`);
+<span style="color: #64ffda;">about</span>      - Display summary about me.
+<span style="color: #64ffda;">projects</span>   - List my projects.
+<span style="color: #64ffda;">skills</span>     - List my technical skills.
+<span style="color: #64ffda;">contact</span>    - Show my contact information.
+<span style="color: #64ffda;">clear</span>      - Clear the terminal screen.
+<span style="color: #64ffda;">reboot</span>     - Reboot the system.
+<span style="color: #64ffda;">ls</span>         - List directory contents.
+<span style="color: #64ffda;">cd [dir]</span>   - Change directory.
+<span style="color: #64ffda;">cat [file]</span>   - Display file content.`);
+                break;
+            case 'about':
+                print(`<pre>${fileSystem['~'].children['about.txt'].content}</pre>`);
+                break;
+            case 'projects':
+                const projects = fileSystem['~'].children.projects.children;
+                let projectsOutput = 'Projects:\n';
+                for (const project in projects) {
+                    projectsOutput += `- <a href="#" onclick="executeCommand('cat projects/${project}'); return false;" style="color: #82aaff;">${project.replace('.md', '')}</a>\n`;
+                }
+                print(projectsOutput);
+                break;
+            case 'skills':
+                const skillsData = JSON.parse(fileSystem['~'].children['skills.json'].content);
+                let skillsOutput = '';
+                for (const category in skillsData) {
+                    skillsOutput += `\n<span style="color: #64ffda;">${category}:</span>\n`;
+                    skillsOutput += skillsData[category].join(', ');
+                    skillsOutput += '\n';
+                }
+                print(skillsOutput);
+                break;
+            case 'contact':
+                print('Contact me via: <a href="mailto:email@example.com" style="color: #64ffda;">email@example.com</a>');
+                break;
+            case 'reboot':
+                output.innerHTML = '';
+                boot();
+                break;
+            case 'matrix':
+                terminal.style.display = 'none';
+                setTimeout(() => {
+                    terminal.style.display = 'block';
+                    scrollToBottom();
+                }, 4000);
                 break;
             case 'clear':
                 output.innerHTML = '';
@@ -180,17 +218,15 @@ This terminal is a testament to that philosophy.
                 }
                 break;
             case 'cat':
-                if (!arg) {
-                    print('cat: Missing operand');
-                    break;
-                }
-                const dirCat = getCurrentDirectory();
-                if (dirCat[arg] && dirCat[arg].type === 'file') {
-                    print(`<pre>${dirCat[arg].content}</pre>`);
-                } else if (dirCat[arg] && dirCat[arg].type === 'directory') {
+                const pathParts = arg.split('/');
+                let targetDir = pathParts.length > 1 ? fileSystem['~'].children[pathParts[0]].children : getCurrentDirectory();
+                const fileName = pathParts.length > 1 ? pathParts[1] : pathParts[0];
+
+                if (targetDir[fileName] && targetDir[fileName].type === 'file') {
+                    print(`<pre>${targetDir[fileName].content}</pre>`);
+                } else if (targetDir[fileName] && targetDir[fileName].type === 'directory') {
                     print(`cat: ${arg}: Is a directory`);
-                }
-                else {
+                } else {
                     print(`cat: ${arg}: No such file or directory`);
                 }
                 break;
@@ -201,6 +237,8 @@ This terminal is a testament to that philosophy.
                 break;
         }
     }
+
+    window.executeCommand = executeCommand;
 
     commandInput.addEventListener('input', () => {
         inputDisplay.textContent = commandInput.value;
@@ -216,6 +254,8 @@ This terminal is a testament to that philosophy.
             print(`<span class="prompt">${currentPrompt}</span> ${command}`);
             
             if (command) {
+                commandHistory.push(command);
+                historyIndex = commandHistory.length;
                 executeCommand(command);
             }
             
@@ -225,6 +265,24 @@ This terminal is a testament to that philosophy.
             promptCachedWidth = 0;
             updateCursorPosition();
             scrollToBottom();
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (historyIndex > 0) {
+                historyIndex--;
+                commandInput.value = commandHistory[historyIndex];
+                inputDisplay.textContent = commandInput.value;
+            }
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
+                inputDisplay.textContent = commandInput.value;
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+                inputDisplay.textContent = '';
+            }
         }
     });
 
@@ -234,54 +292,43 @@ This terminal is a testament to that philosophy.
 
     const canvas = document.getElementById('matrix-canvas');
     const ctx = canvas.getContext('2d');
-
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-
     const katakana = 'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン';
     const latin = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const nums = '0123456789';
     const alphabet = katakana + latin + nums;
-
     const fontSize = 16;
     const columns = canvas.width / fontSize;
-
     const rainDrops = [];
-    for (let x = 0; x < columns; x++) {
-        rainDrops[x] = 1;
-    }
-
+    for (let x = 0; x < columns; x++) { rainDrops[x] = 1; }
     function drawMatrix() {
         ctx.fillStyle = 'rgba(13, 13, 13, 0.05)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
         ctx.fillStyle = '#2C6E49';
         ctx.font = fontSize + 'px monospace';
-
         for (let i = 0; i < rainDrops.length; i++) {
             const text = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
             ctx.fillText(text, i * fontSize, rainDrops[i] * fontSize);
-
             if (rainDrops[i] * fontSize > canvas.height && Math.random() > 0.975) {
                 rainDrops[i] = 0;
             }
             rainDrops[i]++;
         }
     }
-
     window.addEventListener('resize', () => {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
     });
-
     setInterval(drawMatrix, 33);
 
     async function boot() {
         commandInput.disabled = true;
+        inputLine.style.display = 'none';
         for (const line of bootSequence) {
             await type(line.text);
         }
-        document.querySelector('.input-line').style.display = 'flex';
+        inputLine.style.display = 'flex';
         commandInput.disabled = false;
         commandInput.focus();
         promptElement.textContent = `operator@owenofarrell:${currentPath.join('/').replace(/^~/, '~')}$`;
