@@ -8,7 +8,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const splashScreen = document.getElementById('splash-screen');
 
     const audioManager = {
-        keySounds: [],
         bootSound: null,
         keySoundPool: [],
         poolSize: 10,
@@ -126,7 +125,6 @@ This terminal is a testament to that philosophy.
             output.appendChild(line);
             function typeChar() {
                 if (i < text.length) {
-                    audioManager.playKeySound();
                     line.textContent += text.charAt(i);
                     i++;
                     scrollToBottom();
@@ -318,12 +316,12 @@ This terminal is a testament to that philosophy.
     window.executeCommand = executeCommand;
 
     commandInput.addEventListener('input', () => {
-        audioManager.playKeySound();
         inputDisplay.textContent = commandInput.value;
         updateCursorPosition();
     });
 
     commandInput.addEventListener('keydown', (e) => {
+        audioManager.playKeySound();
         const command = commandInput.value.trim();
 
         if (e.key === 'Enter') {
