@@ -120,27 +120,18 @@ This terminal is a testament to that philosophy.
         { text: "Type 'help' to interface.", delay: 50 }
     ];
 
-    async function type(text, options = {}) {
-        const {
-            parentElement = null,
-            playSound = true,
-            charDelay = 25
-        } = options;
-
+    async function type(text, playSound = true, charDelay = 25) {
         return new Promise(resolve => {
             let i = 0;
-            const targetElement = parentElement || document.createElement('div');
-            
-            if (!parentElement) {
-                output.appendChild(targetElement);
-            }
+            const line = document.createElement('div');
+            output.appendChild(line);
 
             function typeChar() {
                 if (i < text.length) {
                     if (playSound) {
                         audioManager.playKeySound();
                     }
-                    targetElement.textContent += text.charAt(i);
+                    line.textContent += text.charAt(i);
                     i++;
                     scrollToBottom();
                     setTimeout(typeChar, charDelay);
@@ -439,18 +430,10 @@ This terminal is a testament to that philosophy.
         commandInput.disabled = true;
         inputLine.style.display = 'none';
         
-        const bootContainer = document.createElement('div');
-        output.appendChild(bootContainer);
-        
         audioManager.playBootSound();
 
         for (const line of bootSequence) {
-            await type(line.text, { 
-                parentElement: bootContainer, 
-                playSound: false, 
-                charDelay: 15 
-            });
-            bootContainer.innerHTML += '<br>';
+            await type(line.text, false, 15); 
             await new Promise(resolve => setTimeout(resolve, line.delay));
         }
 
