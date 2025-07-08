@@ -155,10 +155,11 @@ This terminal is a testament to that philosophy.
                 print(`Thank you, ${contactData.name}. Transmitting message...`);
                 
                 try {
-                    const response = await fetch('/api/contact', {
+                    const response = await fetch('https://formspree.io/f/xwpbdvjy', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
+                            'Accept': 'application/json'
                         },
                         body: JSON.stringify(contactData),
                     });
