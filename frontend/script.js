@@ -82,7 +82,7 @@ This terminal is a testament to that philosophy.
     let currentPath = ['~'];
     let commandHistory = [];
     let historyIndex = -1;
-    let mode = 'normal'; // 'normal', 'contact'
+    let mode = 'normal';
     let contactStep = 0;
     let contactData = {};
     
@@ -138,7 +138,7 @@ This terminal is a testament to that philosophy.
         return current.children;
     }
 
-    function handleContactInput(input) {
+    async function handleContactInput(input) {
         switch (contactStep) {
             case 0:
                 contactData.name = input;
@@ -153,14 +153,28 @@ This terminal is a testament to that philosophy.
             case 2:
                 contactData.message = input;
                 print(`Thank you, ${contactData.name}. Transmitting message...`);
-                // This is where we will call the serverless function
-                // For now, let's just log it and reset
-                console.log(contactData);
-                // In a real scenario: await sendEmail(contactData);
-                print(`Message sent. Returning to normal operation.`);
-                mode = 'normal';
-                contactStep = 0;
-                contactData = {};
+                
+                try {
+                    const response = await fetch('/api/contact', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(contactData),
+                    });
+
+                    if (response.ok) {
+                        print(`Message sent successfully. Returning to normal operation.`);
+                    } else {
+                        throw new Error('Transmission failed.');
+                    }
+                } catch (error) {
+                    print(`Error: ${error.message} Could not send message.`);
+                } finally {
+                    mode = 'normal';
+                    contactStep = 0;
+                    contactData = {};
+                }
                 break;
         }
     }
