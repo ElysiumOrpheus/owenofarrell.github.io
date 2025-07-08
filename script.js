@@ -120,8 +120,9 @@ This terminal is a testament to that philosophy.
         { text: "Type 'help' to interface.", delay: 50 }
     ];
 
-    async function type(text, delay = 25, playSound = true) {
+    async function type(text, playSound = true) {
         return new Promise(resolve => {
+            const charDelay = 25;
             let i = 0;
             const line = document.createElement('div');
             output.appendChild(line);
@@ -133,7 +134,7 @@ This terminal is a testament to that philosophy.
                     line.textContent += text.charAt(i);
                     i++;
                     scrollToBottom();
-                    setTimeout(typeChar, delay);
+                    setTimeout(typeChar, charDelay);
                 } else {
                     resolve();
                 }
@@ -431,7 +432,8 @@ This terminal is a testament to that philosophy.
         
         audioManager.playBootSound();
         for (const line of bootSequence) {
-            await type(line.text, line.delay, false);
+            await type(line.text, false);
+            await new Promise(resolve => setTimeout(resolve, line.delay));
         }
 
         inputLine.style.display = 'flex';
