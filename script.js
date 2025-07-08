@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const splashScreen = document.getElementById('splash-screen');
 
     const audioManager = {
+        keySounds: [],
         bootSound: null,
         keySoundPool: [],
         poolSize: 10,
@@ -109,6 +110,7 @@ This terminal is a testament to that philosophy.
     let mode = 'normal';
     let contactStep = 0;
     let contactData = {};
+    let isRepeating = false;
 
     const bootSequence = [
         { text: 'CRITICAL_SUBSYSTEM_LINK ESTABLISHED...', delay: 100 },
@@ -118,13 +120,16 @@ This terminal is a testament to that philosophy.
         { text: "Type 'help' to interface.", delay: 50 }
     ];
 
-    async function type(text, delay = 25) {
+    async function type(text, delay = 25, playSound = true) {
         return new Promise(resolve => {
             let i = 0;
             const line = document.createElement('div');
             output.appendChild(line);
             function typeChar() {
                 if (i < text.length) {
+                    if (playSound) {
+                        audioManager.playKeySound();
+                    }
                     line.textContent += text.charAt(i);
                     i++;
                     scrollToBottom();
@@ -316,12 +321,19 @@ This terminal is a testament to that philosophy.
     window.executeCommand = executeCommand;
 
     commandInput.addEventListener('input', () => {
+        if (!isRepeating) {
+            audioManager.playKeySound();
+        }
         inputDisplay.textContent = commandInput.value;
         updateCursorPosition();
     });
+    
+    commandInput.addEventListener('keyup', () => {
+        isRepeating = false;
+    });
 
     commandInput.addEventListener('keydown', (e) => {
-        audioManager.playKeySound();
+        isRepeating = e.repeat;
         const command = commandInput.value.trim();
 
         if (e.key === 'Enter') {
@@ -419,7 +431,7 @@ This terminal is a testament to that philosophy.
         
         audioManager.playBootSound();
         for (const line of bootSequence) {
-            await type(line.text);
+            await type(line.text, line.delay, false);
         }
 
         inputLine.style.display = 'flex';
