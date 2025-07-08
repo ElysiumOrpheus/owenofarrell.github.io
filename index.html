@@ -12,7 +12,13 @@
 <body>
     <canvas id="matrix-canvas"></canvas>
 
-    <div id="terminal">
+    <div id="splash-screen">
+        <div id="splash-content">
+            [ Click to Enter Terminal ]
+        </div>
+    </div>
+
+    <div id="terminal" class="hidden">
         <div id="output"></div>
         <div class="input-line">
             <span id="prompt" class="prompt"></span>
@@ -23,8 +29,12 @@
 
     <a href="/simple.html" id="escape-hatch">View Standard Site</a>
 
-    <audio id="key-press-sound" src="key_press.mp3" preload="auto"></audio>
-    <audio id="boot-sound" src="boot_sound.mp3" preload="auto"></audio>
+    <div id="audio-container" style="display: none;">
+        <audio data-key-sound="true" src="key_press_1.mp3" preload="auto"></audio>
+        <audio data-key-sound="true" src="key_press_2.mp3" preload="auto"></audio>
+        <audio data-key-sound="true" src="key_press_3.mp3" preload="auto"></audio>
+        <audio id="boot-sound" src="boot_sound.mp3" preload="auto"></audio>
+    </div>
 
     <script src="script.js" defer></script>
 </body>

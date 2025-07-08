@@ -5,8 +5,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const cursor = document.getElementById('cursor');
     const inputLine = document.querySelector('.input-line');
     const terminal = document.getElementById('terminal');
-    const keySound = document.getElementById('key-press-sound');
-    const bootSound = document.getElementById('boot-sound');
+    const splashScreen = document.getElementById('splash-screen');
+
+    const audioManager = {
+        keySounds: [],
+        bootSound: null,
+        keySoundPool: [],
+        poolSize: 10,
+        currentKeySound: 0,
+        init() {
+            this.bootSound = document.getElementById('boot-sound');
+            const keySoundSources = document.querySelectorAll('audio[data-key-sound="true"]');
+            
+            for (let i = 0; i < this.poolSize; i++) {
+                const sourceIndex = i % keySoundSources.length;
+                const audio = new Audio(keySoundSources[sourceIndex].src);
+                this.keySoundPool.push(audio);
+            }
+        },
+        playBootSound() {
+            if(this.bootSound) this.bootSound.play();
+        },
+        playKeySound() {
+            if (this.keySoundPool.length === 0) return;
+            this.keySoundPool[this.currentKeySound].play();
+            this.currentKeySound = (this.currentKeySound + 1) % this.poolSize;
+        }
+    };
 
     const inputDisplay = document.createElement('span');
     inputDisplay.id = 'input-display';
@@ -85,11 +110,6 @@ This terminal is a testament to that philosophy.
     let mode = 'normal';
     let contactStep = 0;
     let contactData = {};
-    
-    function playKeySound() {
-        keySound.currentTime = 0;
-        keySound.play();
-    }
 
     const bootSequence = [
         { text: 'CRITICAL_SUBSYSTEM_LINK ESTABLISHED...', delay: 100 },
@@ -106,7 +126,7 @@ This terminal is a testament to that philosophy.
             output.appendChild(line);
             function typeChar() {
                 if (i < text.length) {
-                    playKeySound();
+                    audioManager.playKeySound();
                     line.textContent += text.charAt(i);
                     i++;
                     scrollToBottom();
@@ -298,7 +318,7 @@ This terminal is a testament to that philosophy.
     window.executeCommand = executeCommand;
 
     commandInput.addEventListener('input', () => {
-        playKeySound();
+        audioManager.playKeySound();
         inputDisplay.textContent = commandInput.value;
         updateCursorPosition();
     });
@@ -349,10 +369,6 @@ This terminal is a testament to that philosophy.
         }
     });
 
-    document.body.addEventListener('click', () => {
-        commandInput.focus();
-    });
-
     const canvas = document.getElementById('matrix-canvas');
     const ctx = canvas.getContext('2d');
     canvas.width = window.innerWidth;
@@ -379,19 +395,35 @@ This terminal is a testament to that philosophy.
             rainDrops[i]++;
         }
     }
-    window.addEventListener('resize', () => {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-    });
-    setInterval(drawMatrix, 33);
+    
+    let hasInteracted = false;
+    splashScreen.addEventListener('click', () => {
+        if (hasInteracted) return;
+        hasInteracted = true;
+
+        splashScreen.classList.add('hidden');
+        terminal.classList.remove('hidden');
+        
+        audioManager.init();
+        
+        boot();
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+        setInterval(drawMatrix, 33);
+    }, { once: true });
 
     async function boot() {
         commandInput.disabled = true;
         inputLine.style.display = 'none';
-        bootSound.play();
+        
+        audioManager.playBootSound();
         for (const line of bootSequence) {
             await type(line.text);
         }
+
         inputLine.style.display = 'flex';
         commandInput.disabled = false;
         commandInput.focus();
@@ -399,6 +431,4 @@ This terminal is a testament to that philosophy.
         promptCachedWidth = 0;
         updateCursorPosition();
     }
-
-    boot();
 });

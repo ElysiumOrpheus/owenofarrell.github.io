@@ -18,6 +18,35 @@ body, html {
     z-index: -1;
 }
 
+#splash-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #0d0d0d;
+    z-index: 101;
+    cursor: pointer;
+}
+
+#splash-content {
+    font-size: 1.2em;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.5; }
+    50% { opacity: 1; }
+    100% { opacity: 0.5; }
+}
+
+.hidden {
+    display: none !important;
+}
+
 #terminal {
     position: relative;
     z-index: 1;
