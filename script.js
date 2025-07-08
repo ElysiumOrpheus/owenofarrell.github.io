@@ -431,7 +431,7 @@ This terminal is a testament to that philosophy.
         
         audioManager.playBootSound();
         for (const line of bootSequence) {
-            await type(line.text, false, 2); 
+            await type(line.text, false, 15); 
             await new Promise(resolve => setTimeout(resolve, line.delay));
         }
 
